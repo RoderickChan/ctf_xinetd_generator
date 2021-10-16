@@ -9,13 +9,13 @@ cd ctf_xinetd_generator
 python3 generator.py 18 --task-dir ./bin --dest-dir /tmp
 ```
 
-if you want to use `patchelf`, then type:
+If you want to use `patchelf`, then type:
 
 ```
 python3 generator.py 18 --task-dir ./bin --dest-dir /tmp --patchelf --libc-version 2.32
 ```
 
-Or just use prefix to geenrate:
+Or just use prefix to generate:
 
 ```
 python3 generator.py 18 -t ./bin -d /tmp -p -l 2.32
@@ -23,7 +23,7 @@ python3 generator.py 18 -t ./bin -d /tmp -p -l 2.32
 
 ## Help
 
-type `python3 generator.py -h` to get help:
+Type `python3 generator.py -h` to get help:
 
 ```
 python generator.py -h
