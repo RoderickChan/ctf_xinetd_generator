@@ -33,7 +33,8 @@ class Factory:
     
     def __generate_about_docker_file(self, file_content, filename):
         df = self._docker_dir / filename
-        df.write_text(file_content, encoding='utf-8')
+        with open(df.as_posix(), "w", encoding="utf-8", newline="\n") as f:
+            f.write(file_content)
         info("Create {} successfully!".format(filename))
         return self
     
@@ -238,6 +239,9 @@ sleep infinity;
         file_content = """#!/bin/sh
 # build docker image for {}
 docker-compose up -d 
+
+# nc 127.0.0.1 23333 to validate
+nc 127.0.0.1 23333
 
 # exec poc to validate
 # python3 exp.py 127.0.0.1 23333 flag{{test_flag}} 
