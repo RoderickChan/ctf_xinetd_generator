@@ -25,6 +25,7 @@ class Factory:
         self._dd = None
         self._docker_dir = None
         self._file_dir = pathlib.Path(os.path.split(os.path.realpath(__file__))[0])
+        self._port = None
         
         #------------
         self._patchelf = False
@@ -42,9 +43,10 @@ class Factory:
         parser = argparse.ArgumentParser(description='Generate the generating docker image files of pwn task all in one.')
         parser.add_argument('version', choices=[16, 18, 20, 21], type=int,
                             help='Ubuntu version of the image, only support for ubuntu 16/28/20/21.')
-        parser.add_argument('-t', "--task-dir", type=pathlib.Path, required=True, help='Directory path of storing elf binary and flag.')
+        parser.add_argument('-t', "--task-dir", type=pathlib.Path, required=True, help='Directory path of storing elf binary and flag, make sure only flag file and pwn-binary file in this directory.')
         parser.add_argument('-d', "--dest-dir", type=pathlib.Path, required=True, help='Directory path of files that can generate docker image.')
         parser.add_argument('-p', "--patchelf", required=False, default=False, const=True, nargs='?', help='Use patchelf or not.')
+        parser.add_argument('-P', "--port", required=False, default=23333,  nargs='?', help='The port mapping for 9999 in docker.')
         parser.add_argument('-l', "--libc-version", type=str, required=False, help='Libc version when use patchelf.')
         # parser.add_argument('-b', "--bits", choices=[32, 64], required=False, default=64, help='Use patchelf or not.')
         args = parser.parse_args()
@@ -53,8 +55,10 @@ class Factory:
         self._dd = args.dest_dir
         self._patchelf = args.patchelf
         self._libv = args.libc_version
+        self._port = args.port
         
-        msg = "Get args ===> ubuntu version: {}\ttask-dir: {}\tdest-dir: {}\tuse patchelf: {}".format(self._version, self._td, self._dd, self._patchelf)
+        msg = "Get args ===> ubuntu version: {}\ttask-dir: {}\tdest-dir: {}\tuse patchelf: {}\tmapping port: {}".format(self._version, 
+                self._td, self._dd, self._patchelf, self._port)
         if self._patchelf:
             msg += "\tlibc version: {}".format(self._libv)
         info(msg)
@@ -186,8 +190,8 @@ services:
     build: .
     restart: unless-stopped
     ports:
-      - "23333:9999"
-""".format(self._taskname, self._taskname)
+      - "{}:9999"
+""".format(self._taskname, self._taskname, self._port)
         self.__generate_about_docker_file(file_content, "docker-compose.yaml")
         return self
     
@@ -240,13 +244,38 @@ sleep infinity;
 # build docker image for {}
 docker-compose up -d 
 
-# nc 127.0.0.1 23333 to validate
-nc 127.0.0.1 23333
+sleep 3
+# nc 127.0.0.1 {} to validate
+# nc 127.0.0.1 {}
 
 # exec poc to validate
-# python3 exp.py 127.0.0.1 23333 flag{{test_flag}} 
-""".format(self._taskname)
+# flag=$(cat ./task/flag)
+# python3 exp.py 127.0.0.1 {} ${{flag}}
+""".format(self._taskname, self._port, self._port, self._port)
         self.__generate_about_docker_file(file_content, "build_image.sh")
+        return self
+
+    def generate_exp_py(self):
+        file_content = """#!/usr/bin/python3
+# -*- encoding: utf-8 -*-
+from pwn import *
+
+context.update(arch="amd64", os="linux", endian="little")
+
+host = sys.argv[1]
+port = int(sys.argv[2])
+flag = sys.argv[3]
+
+io = remote(host, port)
+
+
+getflag = io.recvregex(r"flag{.*}").decode()
+assert getflag == flag, "flag error!"
+success("checks pass!")
+
+io.interactive()
+"""
+        self.__generate_about_docker_file(file_content, "exp.py")
         return self
 
 
@@ -259,4 +288,5 @@ if __name__ == '__main__':
     generate_dockercompose_file().\
     generate_ctf_xinetd().\
     generate_start_sh().\
-    generate_builup_sh()
+    generate_builup_sh().\
+    generate_exp_py()

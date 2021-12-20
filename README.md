@@ -6,18 +6,18 @@ From <https://github.com/Eadom/ctf_xinetd>
 ```
 git clone https://github.com/RoderickChan/ctf_xinetd_generator.git
 cd ctf_xinetd_generator
-python3 generator.py 18 --task-dir ./bin --dest-dir /tmp
+python3 generator.py 18 --task-dir ./task --dest-dir /tmp
 ```
 If you don't need to use patchelf, `generator.py` is enough! But if you want to use it, please make sure that `generator.py` and the `libs` directory and the `patchelf` binary file are in a same parent directory. Then type:
 
 ```
-python3 generator.py 18 --task-dir ./bin --dest-dir /tmp --patchelf --libc-version 2.32
+python3 generator.py 18 --task-dir ./task --dest-dir -P 10001 /tmp --patchelf --libc-version 2.32
 ```
 
 Or just use prefix to generate:
 
 ```
-python3 generator.py 18 -t ./bin -d /tmp -p -l 2.32
+python3 generator.py 18 -t ./task -d /tmp -P 10001 -p -l 2.32
 ```
 
 ## Help
