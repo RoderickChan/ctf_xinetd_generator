@@ -45,8 +45,8 @@ class Factory:
                             help='Ubuntu version of the image, only support for ubuntu 16/28/20/21.')
         parser.add_argument('-t', "--task-dir", type=pathlib.Path, required=True, help='Directory path of storing elf binary and flag, make sure only flag file and pwn-binary file in this directory.')
         parser.add_argument('-d', "--dest-dir", type=pathlib.Path, required=True, help='Directory path of files that can generate docker image.')
-        parser.add_argument('-p', "--patchelf", required=False, default=False, const=True, nargs='?', help='Use patchelf or not.')
         parser.add_argument('-P', "--port", required=False, default=23333,  nargs='?', help='The port mapping for 9999 in docker.')
+        parser.add_argument('-p', "--patchelf", required=False, default=False, const=True, nargs='?', help='Use patchelf or not.')
         parser.add_argument('-l', "--libc-version", type=str, required=False, help='Libc version when use patchelf.')
         # parser.add_argument('-b', "--bits", choices=[32, 64], required=False, default=64, help='Use patchelf or not.')
         args = parser.parse_args()
@@ -244,7 +244,7 @@ sleep infinity;
 # build docker image for {}
 docker-compose up -d 
 
-sleep 3
+sleep 5
 # nc 127.0.0.1 {} to validate
 # nc 127.0.0.1 {}
 
@@ -270,7 +270,9 @@ io = remote(host, port)
 
 
 getflag = io.recvregex(r"flag{.*}").decode()
-assert getflag == flag, "flag error!"
+idx = getflag.index("flag{")
+getflag = getflag[idx:]
+assert getflag == flag, "flag error! expected flag: {}\tget flag: {}".format(flag, getflag)
 success("checks pass!")
 
 io.interactive()
